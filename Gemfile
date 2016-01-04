@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
-gem 'spree', github: 'spree/spree', branch: '3-0-stable'
+gem 'solidus', '~> 1.1'
+gem 'handlebars_assets', github: 'leshill/handlebars_assets'
 
 group :test do
   gem 'hub_samples', github: 'spree/hub_samples', branch: 'master'
