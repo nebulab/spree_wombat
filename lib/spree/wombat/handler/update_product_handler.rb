@@ -38,6 +38,8 @@ module Spree
             errors = @product.errors.full_messages.join("\n")
             response "Product not valid. #{errors}", 500
           end
+        ensure
+          Spree::Product.set_callback(:touch, :after, :touch_taxons)
         end
 
         # the Spree::Product and Spree::Variant master
