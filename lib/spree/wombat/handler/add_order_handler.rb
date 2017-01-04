@@ -7,7 +7,6 @@ module Spree
           payload = @payload[:order]
           order_params = OrderHandlerBase.order_params(payload)
 
-
           adjustment_attrs = []
 
           shipping_adjustment = nil
@@ -22,7 +21,9 @@ module Spree
           end
 
           order_params["adjustments_attributes"] = adjustment_attrs if adjustment_attrs.present?
-          order = Spree::Core::Importer::Order.import(find_spree_user, order_params)
+          order_params.delete "adjustments_attributes" # JFL FIX
+
+          order = Spree::Core::Importer::Order.import(find_spree_user, order_params.deep_symbolize_keys)
           order.reload
 
           number_of_shipments_created = order.shipments.count
