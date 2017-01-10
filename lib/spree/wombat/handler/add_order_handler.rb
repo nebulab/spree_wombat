@@ -12,11 +12,13 @@ module Spree
           shipping_adjustment = nil
           tax_adjustment = nil
 
-          unless order_params["shipments_attributes"].present?
-            # remove possible shipment adjustment here
-            order_params["adjustments_attributes"].each do |adjustment|
+          # remove possible shipment adjustment here
+          order_params["adjustments_attributes"].each do |adjustment|
+            case adjustment["label"].downcase
+            when "shipping"
+              shipping_adjustment = adjustment
+            else
               adjustment_attrs << adjustment unless adjustment["label"].downcase == "shipping"
-              shipping_adjustment = adjustment if adjustment["label"].downcase == "shipping"
             end
           end
 
@@ -28,10 +30,14 @@ module Spree
 
           number_of_shipments_created = order.shipments.count
           shipping_cost = payload["totals"]["shipping"]
+          shipping_method = Spree::ShippingMethod.find_by!(name: payload["shipping_method"])
           order.shipments.each do |shipment|
             cost_per_shipment = BigDecimal.new(shipping_cost.to_s) / number_of_shipments_created
+            shipment.shipping_rates.where.not(shipping_method_id: shipping_method).destroy_all
+            shipment.shipping_rates.where(shipping_method_id: shipping_method).update_all selected: true
             shipment.update_columns(cost: cost_per_shipment)
           end
+
           order.updater.update_shipment_total
           order.updater.update_payment_state
           order.updater.persist_totals
