@@ -23,7 +23,6 @@ module Spree
           end
 
           order_params["adjustments_attributes"] = adjustment_attrs if adjustment_attrs.present?
-          order_params.delete "adjustments_attributes" # JFL FIX
 
           order = Spree::Core::Importer::Order.import(find_spree_user, order_params.deep_symbolize_keys)
           order.reload

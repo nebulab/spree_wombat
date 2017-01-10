@@ -26,7 +26,16 @@ module Spree
 
           order['line_items_attributes'] = line_items_hash
           order['adjustments_attributes'] = adjustments_attributes_hash
-          payments_attributes.map { |payment| payment.delete("id") }
+          payments_attributes.each do |payment|
+            payment['source'] = {
+              'last_digits' => payment.delete('credit_card_number'),
+              'cc_type' => payment.delete('credit_card_company'),
+              'month' => 1,
+              'year' => 2999,
+              'name' => billing_address_hash.slice("firstname", "lastname").values.join(" "),
+              'gateway_payment_profile_id' => "Imported from Shopify: #{payment.delete('id')}"
+            }
+          end
           order['payments_attributes'] = payments_attributes
           order['completed_at'] = placed_on
           order
