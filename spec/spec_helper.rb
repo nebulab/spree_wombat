@@ -55,7 +55,7 @@ RSpec.configure do |config|
   end
 
   config.before do
-    HTTParty.stub :post
+    allow(HTTParty).to receive(:post)
     Spree::Wombat::Config[:connection_token] = "abc1233"
 
     DatabaseCleaner.start

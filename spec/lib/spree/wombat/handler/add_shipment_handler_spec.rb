@@ -17,7 +17,7 @@ module Spree
           let!(:state) { create(:state, :country => country, name: "California", abbr: "CA") }
 
           before do
-            Spree::Variant.stub(:find_by_sku).and_return(order.variants.first)
+            allow(Spree::Variant).to receive(:find_by_sku) { order.variants.first }
           end
 
           it "will add a new shipment to the order" do
@@ -107,7 +107,7 @@ module Spree
               it "find a state by abbr" do
                 responder = handler.process
                 expect(responder.code).to eql 200
-                expect(order.reload.shipments.last.address.state).to eql state
+                expect(order.reload.ship_address.state).to eql state
               end
 
             end

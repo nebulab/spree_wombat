@@ -4,7 +4,7 @@ module Spree
       class ErroredResponse < StandardError; end
 
       alias read_attribute_for_serialization send
-
+      include ActiveModel::Serialization
       attr_accessor :request_id, :summary, :code, :objects, :exception
 
       def initialize(request_id, summary, code=200, objects=nil, exception=nil)

@@ -170,7 +170,7 @@ module Spree
         context "with images with valid url" do
           before do
             img_fixture = File.open(File.expand_path('../../../../../fixtures/thinking-cat.jpg', __FILE__))
-            URI.stub(:parse).and_return img_fixture
+            allow(URI).to receive(:parse) { img_fixture }
           end
 
           it "will download the image and assign it" do
@@ -181,7 +181,9 @@ module Spree
         context "with invalid image url" do
           it "will raise an exception" do
             images.first["url"] = "http://so wrong . com"
-            expect { handler.process_images(variant, images) }.to raise_error
+            expect {
+              handler.process_images(variant, images)
+            }.to raise_error(Paperclip::Errors::NotIdentifiedByImageMagickError)
           end
         end
       end
@@ -260,7 +262,7 @@ module Spree
       describe "#process" do
         before do
           img_fixture = File.open(File.expand_path('../../../../../fixtures/thinking-cat.jpg', __FILE__))
-          URI.stub(:parse).and_return img_fixture
+          allow(URI).to receive(:parse) { img_fixture }
         end
 
         context "product without children" do

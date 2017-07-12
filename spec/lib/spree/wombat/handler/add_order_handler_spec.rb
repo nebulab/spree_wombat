@@ -14,6 +14,7 @@ module Spree
 
       let!(:variant) { create(:variant, :id => 73) }
       let!(:payment_method) { create(:credit_card_payment_method) }
+      let!(:store) { create(:store) }
 
       context "#process" do
         context "with sane order data" do

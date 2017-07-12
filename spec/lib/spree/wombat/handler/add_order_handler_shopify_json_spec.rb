@@ -14,6 +14,7 @@ module Spree
 
       let!(:variant) { create(:variant, :id => 73) }
       let!(:payment_method) { create(:credit_card_payment_method, name: 'bogus') }
+      let!(:store) { create(:store) }
 
       context "#process" do
         context "with shopify order data" do
@@ -132,27 +133,27 @@ module Spree
           end
 
           context "payment" do
+            let(:order) { Spree::Order.find_by_number("schoftech_1018") }
+            let(:payment) { order.payments.first }
             before do
               handler.process
-              order = Spree::Order.find_by_number("schoftech_1018")
-              @payment = order.payments.first
             end
 
             it "amount is set correctly" do
-              expect(@payment.amount).to eql 49.9
+              expect(payment.amount).to eql 49.9
             end
 
           end
 
           context "shipments" do
+            let(:order) { Spree::Order.find_by_number("schoftech_1018") }
+            let(:shipment) { order.shipments.first }
             before do
               handler.process
-              order = Spree::Order.find_by_number("schoftech_1018")
-              @shipment = order.shipments.first
             end
 
             it "cost is set correctly" do
-              expect(@shipment.cost).to eql 10
+              expect(shipment.cost).to eql 10
             end
           end
 

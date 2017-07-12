@@ -55,13 +55,17 @@ module Spree
 
       def adjustments
         [
-          { name: 'discount', value: object.promo_total.to_f },
+          { name: 'discount', value: discount_total },
           { name: 'tax', value: tax_total },
           { name: 'shipping', value: shipping_total }
         ]
       end
 
       private
+
+        def discount_total
+          object.promo_total.to_f
+        end
 
         def adjustment_total
           object.adjustment_total.to_f

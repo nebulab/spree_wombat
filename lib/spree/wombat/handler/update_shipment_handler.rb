@@ -48,7 +48,6 @@ module Spree
           return response("Can't find a ShippingMethod with name #{shipping_method_name}!", 500) unless shipping_method
 
           shipment_attributes = shipment_hsh.slice *Spree::Shipment.attribute_names
-          shipment_attributes["address_attributes"] = address_attributes if address_attributes
 
           missing_variants = []
           missing_inventory_units = []
@@ -101,8 +100,14 @@ module Spree
             end
           end
 
-          #update attributes
-          shipment.update(shipment_attributes)
+          # update attributes
+          Spree::Shipment.transaction do
+            shipment.update(shipment_attributes)
+
+            if address_attributes
+              shipment.order.update(ship_address_attributes: address_attributes)
+            end
+          end
 
           #fire state transition
           if transition
