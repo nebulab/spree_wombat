@@ -60,24 +60,36 @@ module Spree
           end
 
           context 'discount' do
+            let(:order_promo) { create(:promotion_with_order_adjustment) }
+            let(:order_promo_action) { order_promo.promotion_actions.first }
+            let!(:order_adjustment) {
+              create(:adjustment, adjustable: order, source: order_promo_action, amount: -10, order: order, eligible: true)
+            }
+            let(:line_promo) { create(:promotion_with_item_adjustment) }
+            let(:line_promo_action) { line_promo.promotion_actions.first }
+            let!(:line_adjustment) {
+              create(:adjustment, adjustable: order.line_items.first, source: line_promo_action, amount: -10, order: order, eligible: true)
+            }
+            # let!(:shipment_adjustment) {
+            #   create(:adjustment, adjustable: order.shipments.first, source_type: nil, amount: -10, order: order, eligible: true)
+            # }
+            # let!(:manual_adjustment) {
+            #   create(:adjustment, adjustable: order, source_type: nil, source_id: nil, amount: -10, label: 'Manual discount')
+            # }
             before do
-              create(:adjustment, adjustable: order, source_type: 'Spree::PromotionAction', amount: -10, order: order)
-              create(:adjustment, adjustable: order.line_items.first, source_type: 'Spree::PromotionAction', amount: -10, order: order)
-              create(:adjustment, adjustable: order.shipments.first, source_type: 'Spree::PromotionAction', amount: -10, order: order)
-              #create(:adjustment, adjustable: order, source_type: nil, source_id: nil, amount: -10, label: 'Manual discount')
-              order.update_totals
+              order.update!
             end
 
             it "discount matches order promo total value" do
               discount_hash = serialized_order["adjustments"].select { |a| a["name"] == "discount" }.first
-              expect(discount_hash["value"]).to eq -30.0
+              expect(discount_hash["value"]).to eq -20.0
             end
           end
 
           context 'manual tax from import' do
             before do
               create(:adjustment, adjustable: order, source_type: nil, source_id: nil, amount: 1.14, label: 'Tax', order: order)
-              order.update_totals
+              order.update!
             end
 
             it "tax_total matches the manual value" do

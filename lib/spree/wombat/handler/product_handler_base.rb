@@ -103,9 +103,10 @@ module Spree
           return unless images.present?
 
           images.each do |image_hsh|
+            attachment_data = URI.parse(URI.encode(image_hsh["url"].strip))
             variant.images.create!(
               alt: image_hsh["title"],
-              attachment: URI.parse(URI.encode(image_hsh["url"].strip)),
+              attachment: attachment_data,
               position: image_hsh["position"]
             )
           end

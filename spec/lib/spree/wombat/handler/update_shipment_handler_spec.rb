@@ -21,8 +21,6 @@ module Spree
           let!(:shipment) { create(:shipment, number: message['shipment']['id'], order: order)}
 
           before do
-            #Spree::Variant.stub(:find_by_sku).and_return(order.variants.first)
-            #don't want to trigger a state transition for this example
             message['shipment']['status'] = 'pending'
           end
 
@@ -69,7 +67,7 @@ module Spree
             end
 
             it 'should transition the shipment to the correct state, using the correct event' do
-              Spree::Shipment.any_instance.should_receive(:fire_state_event)
+              expect_any_instance_of(Spree::Shipment).to receive(:fire_state_event)
                                           .with(:cancel)
                                           .and_call_original
 

@@ -7,7 +7,7 @@ module Spree
       # responder as an argument.
       class_attribute :error_notifier
 
-      before_filter :save_request_data, :authorize
+      before_action :save_request_data, :authorize
       rescue_from Exception, :with => :exception_handler
 
       def consume

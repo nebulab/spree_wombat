@@ -34,7 +34,8 @@ module Spree
         end
 
         it "sets the pre_tax_amount" do
-          return_item.pre_tax_amount = 5.0.to_d
+          return_item.amount = 6.0.to_d
+          return_item.included_tax_total = 1.0.to_d
           expect(serialized_return_item[:pre_tax_amount]).to eq "5.0"
         end
 

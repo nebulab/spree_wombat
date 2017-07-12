@@ -3,9 +3,12 @@ require 'spec_helper'
 module Spree
   module Wombat
     describe Handler::UpdateProductHandler do
+      let(:image_path) {
+        '../../../../../fixtures/thinking-cat.jpg'
+      }
       before do
-        img_fixture = File.open(File.expand_path('../../../../../fixtures/thinking-cat.jpg', __FILE__))
-        URI.stub(:parse).and_return img_fixture
+        img_fixture = File.open(File.expand_path(image_path, __FILE__))
+        allow(URI).to receive(:parse) { img_fixture }
       end
 
       it "respond properly if product not found" do

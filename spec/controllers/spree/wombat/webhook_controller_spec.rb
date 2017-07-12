@@ -9,8 +9,17 @@ module Spree
 
     context '#consume' do
       context 'with unauthorized request' do
+        let(:request_params) {
+          {
+            params: {
+              format: :json,
+              path: 'add_order',
+            },
+            body: ::Hub::Samples::Order.request.to_json,
+          }
+        }
         it 'returns 401 status' do
-          post 'consume', ::Hub::Samples::Order.request.to_json, format: :json, path: 'add_order'
+          post :consume, request_params
           expect(response.code).to eql "401"
           response_json = ::JSON.parse(response.body)
           expect(response_json["request_id"]).to_not be_nil
@@ -24,15 +33,33 @@ module Spree
         end
 
         context 'and an existing handler for the webhook' do
+          let(:request_params) {
+            {
+              params: {
+                format: :json,
+                path: 'my_custom',
+              },
+              body: ::Hub::Samples::Order.request.to_json,
+            }
+          }
           it 'will process the webhook handler' do
-            post 'consume', ::Hub::Samples::Order.request.to_json, format: :json, path: 'my_custom'
+            post 'consume', request_params
             expect(response).to be_success
           end
         end
 
         context 'when an exception happens' do
+          let(:web_request_params) {
+            {
+              params: {
+                format: :json,
+                path: invalid_path,
+              },
+              body: ::Hub::Samples::Order.request.to_json,
+            }
+          }
           let(:web_request) do
-            post 'consume', ::Hub::Samples::Order.request.to_json, format: :json, path: invalid_path
+            post 'consume', web_request_params
           end
           let(:invalid_path) { 'upblate_order' }
 
