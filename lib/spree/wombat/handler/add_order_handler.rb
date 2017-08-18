@@ -15,11 +15,11 @@ module Spree
 
             # remove possible shipment adjustment here
             order_params["adjustments_attributes"].each do |adjustment|
-              case adjustment["label"].downcase
-              when "shipping"
+              label = adjustment['label'].downcase
+              if label == 'shipping'
                 shipping_adjustment = adjustment
               else
-                adjustment_attrs << adjustment unless adjustment["label"].downcase == "shipping"
+                adjustment_attrs << adjustment
               end
             end
 
@@ -31,9 +31,9 @@ module Spree
 
             order.reload
 
-            if payload["shipping_method"]
+            payload["shipping_method"] &&
               shipping_method = Spree::ShippingMethod.find_by!(name: payload["shipping_method"])
-            end
+
             number_of_shipments_created = order.shipments.count
             shipping_cost = payload["totals"]["shipping"]
             order.shipments.each do |shipment|

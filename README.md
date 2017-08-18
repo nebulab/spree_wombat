@@ -1,15 +1,15 @@
-# Spree Wombat
+# Solidus Cangaroo
 
-Connect your SpreeCommerce Storefront to Wombat, providing push API and webhook handlers
+Connect your Solidus Storefront to Cangaroo, providing push API and webhook handlers
 
-[![Build Status](https://travis-ci.org/spree/spree_wombat.svg?branch=master)](https://travis-ci.org/spree/spree_wombat)
+[![Build Status](https://travis-ci.org/nebulab/solidus_cangaroo.svg?branch=master)](https://travis-ci.org/nebulab/solidus_cangaroo)
 
 ## Installation
 
-Add spree_wombat to your Gemfile:
+Add solidus_cangaroo to your Gemfile:
 
 ```ruby
-gem 'spree_wombat', git: 'git@github.com:spree/spree_wombat.git', branch: 'master'
+gem 'solidus_cangaroo', git: 'git@github.com:nebulab/solidus_cangaroo.git', branch: 'master'
 ```
 
 Bundle your dependencies and run the installation generator:
@@ -19,7 +19,7 @@ bundle
 bundle exec rails g spree_wombat:install
 ```
 
-Add your Wombat credentials to `config/initializers/wombat.rb`:
+Add your Cangaroo credentials to `config/initializers/wombat.rb`:
 
 ```ruby
 Spree::Wombat::Config.configure do |config|
@@ -34,7 +34,7 @@ All the configuration is done inside the initializer here: `config/initializers/
 
 ### push_objects
 
-The push_objects is an array of model names that are selected to push to Wombat. We use these as keys in other places as well to configure how the payload is serialized and to keep track of the last time we pushed the objects.
+The push_objects is an array of model names that are selected to push to Cangaroo. We use these as keys in other places as well to configure how the payload is serialized and to keep track of the last time we pushed the objects.
 
 ```ruby
 config.push_objects = ["Spree::Order", "Spree::Product"]
@@ -44,7 +44,7 @@ By default we only push `Spree::Order` and `Spree::Product` models.
 
 ### payload_builder
 
-To push the data to Wombat we need to configure the way on how to construct the JSON payload.
+To push the data to Cangaroo we need to configure the way on how to construct the JSON payload.
 
 
 ```ruby
@@ -60,12 +60,12 @@ Each model has a `serializer` and a `root` field that defines the serializer we 
 
 We have defined serializers for the default objects, you can find them [here](https://github.com/spree/spree_wombat/tree/2-3-stable/app/serializers/spree/wombat)
 
-To push other objects to Wombat, you only need to add an entry in the `push_objects` and the `payload_builder` configurations.
+To push other objects to Cangaroo, you only need to add an entry in the `push_objects` and the `payload_builder` configurations.
 
 
 ### last_pushed_timestamps
 
-For every model we push to Wombat we keep track when we pushed the objects.
+For every model we push to Cangaroo we keep track when we pushed the objects.
 
 Do not add this in `config/initializers/wombat.rb` otherwise it will reset the data on each restart.
 
@@ -95,9 +95,9 @@ Rails.application.config.to_prepare do
 end
 ```
 
-## Push to Wombat
+## Push to Cangaroo
 
-To push objects to Wombat we provide you with the following rake task:
+To push objects to Cangaroo we provide you with the following rake task:
 
 ```shell
 bundle exec rake wombat:push_it
