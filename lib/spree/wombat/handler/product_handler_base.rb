@@ -103,11 +103,18 @@ module Spree
           return unless images.present?
 
           images.each do |image_hsh|
-            variant.images.create!(
-              alt: image_hsh["title"],
-              attachment: URI.parse(URI.encode(image_hsh["url"].strip)),
-              position: image_hsh["position"]
-            )
+            attachment_data = URI.parse(URI.encode(image_hsh["url"].strip))
+            begin
+              variant.images.create!(
+                alt: image_hsh["title"],
+                attachment: attachment_data,
+                position: image_hsh["position"]
+              )
+            rescue Paperclip::Errors::NotIdentifiedByImageMagickError
+              raise
+            rescue SocketError
+              raise Paperclip::Errors::NotIdentifiedByImageMagickError
+            end
           end
         end
 

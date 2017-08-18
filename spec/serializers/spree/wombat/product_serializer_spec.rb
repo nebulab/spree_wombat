@@ -53,7 +53,9 @@ module Spree
           let(:taxon2)   { create(:taxon, name: 'modern') }
 
           before do
-            product.stub :taxons => [taxon_shirts, taxon_hats, taxon_awesomehats, taxon_rings, taxon2]
+            allow(product).to receive(:taxons) { 
+              [taxon_shirts, taxon_hats, taxon_awesomehats, taxon_rings, taxon2]
+            }
           end
 
           it "serailizes the taxons as nested arrays" do

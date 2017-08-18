@@ -4,37 +4,47 @@ module Spree
       class AddOrderHandler < OrderHandlerBase
 
         def process
-          payload = @payload[:order]
-          order_params = OrderHandlerBase.order_params(payload)
+          Spree::Order.transaction do
+            payload = @payload[:order]
+            order_params = OrderHandlerBase.order_params(payload)
 
+            adjustment_attrs = []
 
-          adjustment_attrs = []
+            shipping_adjustment = nil
+            tax_adjustment = nil
 
-          shipping_adjustment = nil
-          tax_adjustment = nil
-
-          unless order_params["shipments_attributes"].present?
             # remove possible shipment adjustment here
             order_params["adjustments_attributes"].each do |adjustment|
-              adjustment_attrs << adjustment unless adjustment["label"].downcase == "shipping"
-              shipping_adjustment = adjustment if adjustment["label"].downcase == "shipping"
+              case adjustment["label"].downcase
+              when "shipping"
+                shipping_adjustment = adjustment
+              else
+                adjustment_attrs << adjustment unless adjustment["label"].downcase == "shipping"
+              end
             end
-          end
 
-          order_params["adjustments_attributes"] = adjustment_attrs if adjustment_attrs.present?
-          order = Spree::Core::Importer::Order.import(find_spree_user, order_params)
-          order.reload
+            order_params["adjustments_attributes"] = adjustment_attrs if adjustment_attrs.present?
 
-          number_of_shipments_created = order.shipments.count
-          shipping_cost = payload["totals"]["shipping"]
-          order.shipments.each do |shipment|
-            cost_per_shipment = BigDecimal.new(shipping_cost.to_s) / number_of_shipments_created
-            shipment.update_columns(cost: cost_per_shipment)
+            order = nil
+
+            order = Spree::Core::Importer::Order.import(find_spree_user, order_params.deep_symbolize_keys)
+
+            order.reload
+
+            if payload["shipping_method"]
+              shipping_method = Spree::ShippingMethod.find_by!(name: payload["shipping_method"])
+            end
+            number_of_shipments_created = order.shipments.count
+            shipping_cost = payload["totals"]["shipping"]
+            order.shipments.each do |shipment|
+              cost_per_shipment = BigDecimal.new(shipping_cost.to_s) / number_of_shipments_created
+              shipment.shipping_rates.where.not(shipping_method_id: shipping_method).destroy_all
+              shipment.shipping_rates.where(shipping_method_id: shipping_method).update_all selected: true
+              shipment.update_columns(cost: cost_per_shipment)
+            end
+            order.updater.update
+            response "Order number #{order.number} was added", 200, Base.wombat_objects_for(order.reload)
           end
-          order.updater.update_shipment_total
-          order.updater.update_payment_state
-          order.updater.persist_totals
-          response "Order number #{order.number} was added", 200, Base.wombat_objects_for(order.reload)
         end
 
         private

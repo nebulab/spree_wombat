@@ -4,7 +4,10 @@ module Spree
   module Wombat
     describe InventoryUnitSerializer do
 
-      let(:shipment) { create(:shipment, address: create(:address), order: create(:order_with_line_items)) }
+      let(:order) {
+        create(:order_with_line_items, bill_address: create(:address))
+      }
+      let(:shipment) { create(:shipment, order: order) }
       let(:inventory_unit) { shipment.inventory_units.first }
       let(:serialized_inventory_unit) { JSON.parse (InventoryUnitSerializer.new(inventory_unit, root: false).to_json) }
 

@@ -21,6 +21,7 @@ shared_examples "receives the return items" do |message=/Customer return \d+ was
   it "receives all the return items" do
     subject
     customer_return = Spree::CustomerReturn.last
+    customer_return.reload
     expect(customer_return.return_items.count).to eq 3
     expect(customer_return.return_items.map(&:reception_status).uniq).to eq ["received"]
   end
@@ -28,7 +29,7 @@ shared_examples "receives the return items" do |message=/Customer return \d+ was
   it "attempts to accept all of the return items" do
     accept_count = 0
     original_method = Spree::ReturnItem.instance_method(:attempt_accept)
-    Spree::ReturnItem.any_instance.stub(:attempt_accept) do |return_item|
+    allow_any_instance_of(Spree::ReturnItem).to receive(:attempt_accept) do |return_item|
       accept_count += 1
       original_method.bind(return_item).call
     end
@@ -179,7 +180,7 @@ module Spree
           context "there are not enough items to fulfill the return" do
             before do
               inventory_units = order.inventory_units.take(1)
-              Spree::Order.any_instance.stub(:inventory_units) { inventory_units }
+              allow_any_instance_of(Spree::Order).to receive(:inventory_units) { inventory_units }
             end
 
             it_behaves_like "does not receive the return items" do
@@ -189,9 +190,22 @@ module Spree
 
           context "items have already been received" do
             context "any of the items could possibly be returned" do
+              let(:inventory_unit) {
+                order.inventory_units.last
+              }
+              let(:return_authorization) {
+                create(:return_authorization, order: order, stock_location: stock_location)
+              }
+              let(:new_return_item) {
+                inventory_unit
+                  .return_items
+                  .create(return_authorization: return_authorization,
+                          reception_status: 'received')
+              }
+
               before do
                 Spree::CustomerReturn.create!(
-                  return_items: [order.inventory_units.last.return_items.create(return_authorization: create(:return_authorization, order: order, stock_location: stock_location))],
+                  return_items: [new_return_item],
                   stock_location: stock_location
                 )
               end
@@ -205,7 +219,13 @@ module Spree
             context "none of the items could possibly be returned since they all already have been" do
               before do
                 Spree::CustomerReturn.create!(
-                  return_items: order.inventory_units.map { |iu| iu.return_items.create return_authorization: create(:return_authorization, order: order, stock_location: stock_location) },
+                  return_items: order.inventory_units.map { |iu|
+                    ra = create(:return_authorization,
+                                order: order,
+                                stock_location: stock_location)
+                    iu.return_items.create(return_authorization: ra,
+                                           reception_status: 'received')
+                  },
                   stock_location: stock_location
                 )
               end
@@ -277,12 +297,18 @@ module Spree
             end
           end
           context "the customer return requires manual intervention" do
-            before { Spree::CustomerReturn.any_instance.stub(:completely_decided?) { false } }
+            before do
+              allow_any_instance_of(Spree::CustomerReturn)
+                .to receive(:completely_decided?) { false }
+            end
             it_behaves_like "does not attempt to refund the customer"
           end
 
           context "the customer return has already been reimbursed" do
-            before { Spree::CustomerReturn.any_instance.stub(:fully_reimbursed?) { true } }
+            before do
+              allow_any_instance_of(Spree::CustomerReturn)
+                .to receive(:fully_reimbursed?) { true }
+            end
             it_behaves_like "does not attempt to refund the customer"
           end
         end

@@ -19,7 +19,7 @@ module Spree
             return response("Unable to create the requested amount of return items", 500)
           end
 
-          if customer_return.save
+          if save_and_receive(customer_return)
             reimburse_customer_return!(customer_return)
             response "Customer return #{customer_return.id} was added", 200
           else
@@ -41,18 +41,17 @@ module Spree
         def return_items(include_received = false)
           customer_return_params[:items].flat_map do |item|
             inventory_units = item_inventory_units(item)
-            return_items = inventory_units.map(&:current_or_new_return_item)
-            return_items = prune_received_return_items(return_items) unless include_received
-            return_items.each do |ri|
+            ret_items = inventory_units.map(&:current_or_new_return_item)
+            ret_items = prune_received_return_items(ret_items) unless include_received
+            ret_items.each do |ri|
               ri.resellable = !!item[:resellable]
               ri.return_authorization ||= ReturnAuthorization.find_by_number(customer_return_params[:rma])
             end
-            return_items = sort_return_items(return_items)
+            ret_items = sort_return_items(ret_items)
 
             quantity = item[:quantity].to_i
-            quantity = 1 if quantity == 0
-            return_items.take(quantity)
-
+            quantity.zero? && quantity = 1
+            ret_items.take(quantity)
           end.compact
         end
 
@@ -69,14 +68,14 @@ module Spree
           customer_return_params[:items].map { |i| i[:quantity].to_i }.sum
         end
 
-        def prune_received_return_items(return_items)
-          return_items.select { |ri| !ri.received? }
+        def prune_received_return_items(ret_items)
+          ret_items.select { |ri| !ri.received? }
         end
 
-        def sort_return_items(return_items)
-          return_items = return_items.sort_by { |ri| -(ri.created_at || DateTime.now).to_i }
-          return_items = return_items.sort_by { |ri| ri.return_authorization.try(:number) == customer_return_params[:rma] ? 0 : 1 }
-          return_items.sort_by { |ri| ri.persisted? ? 0 : 1 }
+        def sort_return_items(ret_items)
+          ret_items = ret_items.sort_by { |ri| -(ri.created_at || DateTime.now).to_i }
+          ret_items = ret_items.sort_by { |ri| ri.return_authorization.try(:number) == customer_return_params[:rma] ? 0 : 1 }
+          ret_items.sort_by { |ri| ri.persisted? ? 0 : 1 }
         end
 
         def reimburse_customer_return!(customer_return)
@@ -85,6 +84,15 @@ module Spree
             reimbursement.save!
             reimbursement.perform!
           end
+        end
+
+        def save_and_receive(customer_return)
+          save_status = receive_status = false
+          Spree::CustomerReturn.transaction do
+            save_status = customer_return.save
+            receive_status = customer_return.return_items.each(&:receive!)
+          end
+          save_status && receive_status
         end
       end
     end
