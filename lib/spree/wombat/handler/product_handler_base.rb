@@ -104,11 +104,17 @@ module Spree
 
           images.each do |image_hsh|
             attachment_data = URI.parse(URI.encode(image_hsh["url"].strip))
-            variant.images.create!(
-              alt: image_hsh["title"],
-              attachment: attachment_data,
-              position: image_hsh["position"]
-            )
+            begin
+              variant.images.create!(
+                alt: image_hsh["title"],
+                attachment: attachment_data,
+                position: image_hsh["position"]
+              )
+            rescue Paperclip::Errors::NotIdentifiedByImageMagickError
+              raise
+            rescue SocketError
+              raise Paperclip::Errors::NotIdentifiedByImageMagickError
+            end
           end
         end
 
